@@ -6,7 +6,10 @@ export const getPeliculas = async (req, res) => {
     const [rows] = await pool.query("SELECT * FROM peliculas");
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener películas", details: error.message });
+    return res.status(500).json({
+      message: 'No se encontró la consulta',
+      error: error.message
+    });
   }
 };
 
@@ -14,14 +17,17 @@ export const getPeliculas = async (req, res) => {
 export const getPeliculasByID = async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM peliculas WHERE id = ?", [req.params.id]);
-    if (rows.length <= 0) {
-      return res.status(404).json({
-        message: 'No existe película con este ID'
-      });
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Película no encontrada" });
     }
-    res.json(rows[0]);  // Devolver solo un objeto, ya que estamos buscando por un ID específico
+
+    res.json(rows[0]);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener película", details: error.message });
+    return res.status(500).json({
+      message: 'Error al obtener película por ID',
+      error: error.message
+    });
   }
 };
 
@@ -29,10 +35,12 @@ export const getPeliculasByID = async (req, res) => {
 export const createPeliculas = async (req, res) => {
   try {
     const { titulo, duracionmin, clasificacion, alanzamiento } = req.body;
+
     const [rows] = await pool.query(
-      "INSERT INTO peliculas (titulo, duracionmin, clasificacion, alanzamiento) VALUES (?,?,?,?)",
+      "INSERT INTO peliculas (titulo, duracionmin, clasificacion, alanzamiento) VALUES (?, ?, ?, ?)",
       [titulo, duracionmin, clasificacion, alanzamiento]
     );
+
     res.status(201).json({
       id: rows.insertId,
       titulo,
@@ -41,7 +49,10 @@ export const createPeliculas = async (req, res) => {
       alanzamiento
     });
   } catch (error) {
-    res.status(500).json({ error: "Error al crear película", details: error.message });
+    res.status(500).json({
+      message: "Error al crear película",
+      error: error.message
+    });
   }
 };
 
@@ -59,17 +70,19 @@ export const updatePeliculas = async (req, res) => {
         alanzamiento = ?
       WHERE id = ?
     `;
+
     const [result] = await pool.query(querySQL, [titulo, duracionmin, clasificacion, alanzamiento, id]);
 
-    if (result.affectedRows == 0) {
-      return res.status(404).json({
-        message: 'El ID no existe'
-      });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'El ID no existe' });
     }
 
     res.json({ message: 'Actualización correcta' });
   } catch (error) {
-    res.status(500).json({ error: "Error al actualizar película", details: error.message });
+    res.status(500).json({
+      message: "Error al actualizar película",
+      error: error.message
+    });
   }
 };
 
@@ -78,14 +91,15 @@ export const deletePeliculas = async (req, res) => {
   try {
     const [result] = await pool.query("DELETE FROM peliculas WHERE id = ?", [req.params.id]);
 
-    if (result.affectedRows <= 0) {
-      return res.status(404).json({
-        message: 'No existe registro con este ID'
-      });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'No existe registro con este ID' });
     }
 
-    res.sendStatus(204);  // Código de éxito sin contenido
+    res.sendStatus(204);  // Éxito sin contenido
   } catch (error) {
-    res.status(500).json({ error: "Error al eliminar película", details: error.message });
+    res.status(500).json({
+      message: "Error al eliminar película",
+      error: error.message
+    });
   }
 };
